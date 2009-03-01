@@ -1,0 +1,15 @@
+do{ my $x = {
+       'build_requires' => {
+                             'DateTime' => 0,
+                             'Digest::HMAC_SHA1' => 0,
+                             'Test::More' => 0,
+                             'Params::Validate' => 0,
+                             'Squirrel' => 0,
+                             'MIME::Base64' => 0,
+                             'XML::RPC' => '0.9'
+                           },
+       'conflicts' => {},
+       'requires' => {},
+       'recommends' => {}
+     };
+$x; }

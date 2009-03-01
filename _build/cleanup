@@ -1,4 +1,0 @@
-do{ my $x = {
-       'Net-Mollom-*' => 1
-     };
-$x; }

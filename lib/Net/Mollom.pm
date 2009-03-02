@@ -22,7 +22,7 @@ our @SERVERS = (
 );
 our $SERVERS_INITIALIZED = 0;
 our $API_VERSION         = '1.0';
-our $VERSION             = '0.02';
+our $VERSION             = '0.03';
 
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
@@ -288,6 +288,39 @@ sub get_audio_captcha {
     my $results = $self->_make_api_call('getAudioCaptcha', \%args);
     $self->session_id($results->{session_id});
     return $results->{url};
+}
+
+=head2 check_captcha
+
+Check that what the user entered matches the last CAPTCHA that Mollom
+sent as part of this session. Takes the following named arguments:
+
+=over
+
+=item * solution
+
+The user's answer to the CAPTCHA
+
+=back
+
+Returns true if correct, false otherwise.
+
+=cut
+
+sub check_captcha {
+    my $self = shift;
+    my %args = validate(
+        @_,
+        {
+            solution   => { type => SCALAR },
+            session_id => { type => SCALAR, optional => 1 },
+        }
+    );
+    $args{session_id} ||= $self->session_id;
+
+    # get the server list from Mollom if we don't already have one
+    $self->server_list() unless $SERVERS_INITIALIZED;
+    return $self->_make_api_call('checkCaptcha', \%args);
 }
 
 =head2 server_list

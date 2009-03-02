@@ -1,5 +1,8 @@
 Revision history for Net-Mollom
 
+0.03    2009-03-02
+    + added check_captcha() method
+
 0.02    2009-03-01
     + Remove blib/ from MANIFEST
 

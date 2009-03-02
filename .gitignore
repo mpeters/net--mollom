@@ -1,0 +1,6 @@
+MANIFEST
+META.yml
+Makefile.PL
+*.swp
+*.swo
+*.bak

@@ -1,5 +1,9 @@
 Revision history for Net-Mollom
 
+0.04    ()
+    + tests now skip if we can't get data back from Mollom (now there are no failures if run offline)
+    + use Module::Build::Smolder to make it easier to smoke test
+
 0.03    2009-03-02
     + added check_captcha() method
 

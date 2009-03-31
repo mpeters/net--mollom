@@ -1,8 +1,8 @@
 use strict;
 use warnings;
-use Module::Build;
+use Module::Build::Smolder;
 
-my $builder = Module::Build->new(
+my $builder = Module::Build::Smolder->new(
     module_name         => 'Net::Mollom',
     license             => 'perl',
     dist_author         => 'Michael Peters <mpeters@plusthree.com>',
@@ -17,7 +17,6 @@ my $builder = Module::Build->new(
         'DateTime' => 0,
     },
     add_to_cleanup      => [ 'Net-Mollom-*' ],
-    create_makefile_pl => 'traditional',
 );
 
 $builder->create_build_script();

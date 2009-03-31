@@ -19,6 +19,10 @@ eval { $mollom->get_statistics(type => 'today_days') };
 ok($@);
 like($@, qr/did not pass regex check/);
 
-my $count = $mollom->get_statistics(type => 'total_days');
-ok($count);
-cmp_ok($count, '>=', 0);
+SKIP: {
+    my $count;
+    eval { $count = $mollom->get_statistics(type => 'total_days') };
+    skip("Can't reach Mollom servers", 2) if $@ && $@ =~ /no data/;
+    ok($count);
+    cmp_ok($count, '>=', 0);
+}

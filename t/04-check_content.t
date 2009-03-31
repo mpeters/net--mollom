@@ -20,32 +20,37 @@ ok(!$check);
 
 eval { $check = $mollom->check_content() };
 ok($@);
-like($@, qr/at least 1/);
+like($@, qr/at least 1/, 'checking required parameters');
 ok(!$check);
 
-# now do the real thing
-$check = $mollom->check_content(
-    post_title => 'Foo Bar',
-    post_body => q/
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-        Mauris ultricies, lorem in gravida rhoncus, tortor dui viverra magna, 
-        vitae vehicula neque ligula et nibh. Pellentesque habitant morbi tristique 
-        senectus et netus et malesuada fames ac turpis egestas. Etiam et libero. 
-        Vivamus orci.
-    /,
-);
-isa_ok($check, 'Net::Mollom::ContentCheck');
-ok($check->is_ham, 'it is ham');
-ok(!$check->is_spam, 'it is not spam');
-ok(!$check->is_unsure, 'it is not unsure');
-cmp_ok($check->quality, '>', 0, 'testing content has some quality');
+SKIP: {
+    # now do the real thing
+    eval {
+        $check = $mollom->check_content(
+            post_title => 'Foo Bar',
+            post_body => q/
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+                Mauris ultricies, lorem in gravida rhoncus, tortor dui viverra magna, 
+                vitae vehicula neque ligula et nibh. Pellentesque habitant morbi tristique 
+                senectus et netus et malesuada fames ac turpis egestas. Etiam et libero. 
+                Vivamus orci.
+            /,
+        );
+    };
+    skip("Can't reach Mollom servers", 10) if $@ =~ /no data/;
+    isa_ok($check, 'Net::Mollom::ContentCheck');
+    ok($check->is_ham, 'it is ham');
+    ok(!$check->is_spam, 'it is not spam');
+    ok(!$check->is_unsure, 'it is not unsure');
+    cmp_ok($check->quality, '>', 0, 'testing content has some quality');
 
-$check = $mollom->check_content(
-    post_title => 'spam, buy some v1@grA!',
-    post_body => 'spam',
-);
-isa_ok($check, 'Net::Mollom::ContentCheck');
-ok(!$check->is_ham, 'it is not ham');
-ok($check->is_spam, 'it is spam');
-ok(!$check->is_unsure, 'it is not unsure');
-cmp_ok($check->quality, '==', 0.0, 'spam content has no quality');
+    $check = $mollom->check_content(
+        post_title => 'spam, buy some v1@grA!',
+        post_body => 'spam',
+    );
+    isa_ok($check, 'Net::Mollom::ContentCheck');
+    ok(!$check->is_ham, 'it is not ham');
+    ok($check->is_spam, 'it is spam');
+    ok(!$check->is_unsure, 'it is not unsure');
+    cmp_ok($check->quality, '==', 0.0, 'spam content has no quality');
+}

@@ -11,16 +11,20 @@ my $mollom = Net::Mollom->new(
 );
 isa_ok($mollom, 'Net::Mollom');
 
-my $url = $mollom->get_image_captcha();
-ok($url);
-
 # check parameter validation
 eval { $mollom->check_captcha() };
 ok($@);
 like($@, qr/missing/, 'needs a solution');
 
-# now test it out
-my $result = $mollom->check_captcha(solution => 'incorrect');
-ok(!$result, 'solution incorrect');
-$result = $mollom->check_captcha(solution => 'correct');
-ok($result, 'solution correct');
+SKIP: {
+    my $url;
+    eval { $url = $mollom->get_image_captcha };
+    skip("Can't reach Mollom servers", 3) if $@ && $@ =~ /no data/;
+    ok($url);
+
+    # now test it out
+    my $result = $mollom->check_captcha(solution => 'incorrect');
+    ok(!$result, 'solution incorrect');
+    $result = $mollom->check_captcha(solution => 'correct');
+    ok($result, 'solution correct');
+}

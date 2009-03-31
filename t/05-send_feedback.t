@@ -10,31 +10,37 @@ my $mollom = Net::Mollom->new(
     public_key => '72446602ffba00c907478c8f45b83b03',
 );
 isa_ok($mollom, 'Net::Mollom');
-my $check = $mollom->check_content(
-    post_title => 'Foo Bar',
-    post_body => q/
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-        Mauris ultricies, lorem in gravida rhoncus, tortor dui viverra magna, 
-        vitae vehicula neque ligula et nibh. Pellentesque habitant morbi tristique 
-        senectus et netus et malesuada fames ac turpis egestas. Etiam et libero. 
-        Vivamus orci.
-    /,
+my $check;
+SKIP: {
+    eval { 
+        $check = $mollom->check_content(
+            post_title => 'Foo Bar',
+            post_body => q/
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+                Mauris ultricies, lorem in gravida rhoncus, tortor dui viverra magna, 
+                vitae vehicula neque ligula et nibh. Pellentesque habitant morbi tristique 
+                senectus et netus et malesuada fames ac turpis egestas. Etiam et libero. 
+                Vivamus orci.
+            /,
 
-);
-isa_ok($check, 'Net::Mollom::ContentCheck');
-ok($check->is_ham, 'it is ham');
+        );
+    };
+    skip("Can't reach Mollom servers", 8) if $@ && $@ =~ /no data/;
+    isa_ok($check, 'Net::Mollom::ContentCheck');
+    ok($check->is_ham, 'it is ham');
 
-# test parameter validation
-eval { $mollom->send_feedback };
-ok($@);
-like($@, qr/'feedback' missing/);
-eval { $mollom->send_feedback(feedback => 'sucks') };
-ok($@);
-like($@, qr/did not pass regex check/);
+    # test parameter validation
+    eval { $mollom->send_feedback };
+    ok($@);
+    like($@, qr/'feedback' missing/);
+    eval { $mollom->send_feedback(feedback => 'sucks') };
+    ok($@);
+    like($@, qr/did not pass regex check/);
 
-my $results = $mollom->send_feedback(feedback => 'unwanted');
-ok($results);
+    my $results = $mollom->send_feedback(feedback => 'unwanted');
+    ok($results);
 
-# specifying the session_id
-$results = $mollom->send_feedback(feedback => 'unwanted', session_id => 123);
-ok($results);
+    # specifying the session_id
+    $results = $mollom->send_feedback(feedback => 'unwanted', session_id => 123);
+    ok($results);
+}

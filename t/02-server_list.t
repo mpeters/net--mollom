@@ -9,5 +9,10 @@ my $mollom = Net::Mollom->new(
     public_key => '72446602ffba00c907478c8f45b83b03',
 );
 isa_ok($mollom, 'Net::Mollom');
-my @servers = $mollom->server_list();
-cmp_ok($#servers, '>=', 1, 'got at least 1 server back');
+
+SKIP: {
+    my @servers;
+    eval { @servers = $mollom->server_list };
+    skip("Can't reach Mollom servers", 1) if $@ && $@ =~ /no data/;
+    cmp_ok($#servers, '>=', 1, 'got at least 1 server back');
+}

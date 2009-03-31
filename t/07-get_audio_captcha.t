@@ -16,16 +16,20 @@ eval { $mollom->get_audio_captcha(foo => 1) };
 ok($@);
 like($@, qr/was not listed/);
 
-my $url = $mollom->get_audio_captcha();
-ok($url);
-like($url, qr/^http:\/\/.*\.mp3/, "got MP3 URL $url");
+SKIP: {
+    my $url;
+    eval { $url = $mollom->get_audio_captcha() };
+    skip("Can't reach Mollom servers", 5) if $@ && $@ =~ /no data/;
+    ok($url);
+    like($url, qr/^http:\/\/.*\.mp3/, "got MP3 URL $url");
 
-# now try after a content check
-my $check = $mollom->check_content(
-    post_title => 'Foo Bar',
-    post_body  => 'Lorem ipsum dolor sit amet',
-);
-isa_ok($check, 'Net::Mollom::ContentCheck');
-$url = $mollom->get_audio_captcha();
-ok($url);
-like($url, qr/^http:\/\/.*\.mp3/, "got MP3 URL $url");
+    # now try after a content check
+    my $check = $mollom->check_content(
+        post_title => 'Foo Bar',
+        post_body  => 'Lorem ipsum dolor sit amet',
+    );
+    isa_ok($check, 'Net::Mollom::ContentCheck');
+    $url = $mollom->get_audio_captcha();
+    ok($url);
+    like($url, qr/^http:\/\/.*\.mp3/, "got MP3 URL $url");
+}

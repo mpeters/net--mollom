@@ -1,5 +1,5 @@
 package Net::Mollom;
-use Squirrel;
+use Any::Moose;
 use XML::RPC;
 use DateTime;
 use Params::Validate qw(validate SCALAR);

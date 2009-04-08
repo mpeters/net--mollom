@@ -1,6 +1,9 @@
 Revision history for Net-Mollom
 
-0.04    ()
+0.05    2009-04-08
+    + Remove old Makefile.PL that was confusing installers because it didn't list our new pre-reqs
+
+0.04    2009-04-04
     + tests now skip if we can't get data back from Mollom (now there are no failures if run offline)
     + use Module::Build::Smolder to make it easier to smoke test
     + Use Any::Moose instead of Squirrel

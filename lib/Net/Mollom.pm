@@ -22,7 +22,7 @@ our @SERVERS = (
 );
 our $SERVERS_INITIALIZED = 0;
 our $API_VERSION         = '1.0';
-our $VERSION             = '0.04';
+our $VERSION             = '0.05';
 
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;

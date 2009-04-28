@@ -3,3 +3,5 @@ META.yml
 *.swp
 *.swo
 *.bak
+_build
+Build

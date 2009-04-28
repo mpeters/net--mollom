@@ -3,6 +3,7 @@ Revision history for Net-Mollom
 0.06    2009-04-28
     + Drop Module::Build::Smolder since configure_requires seems to still trip up some testers
     + Remove left over vestige of Squirrel in helper module.
+    + added warnings attribute to silence helpful, but slightly annoying carp's
 
 0.05    2009-04-08
     + Remove old Makefile.PL that was confusing installers because it didn't list our new pre-reqs

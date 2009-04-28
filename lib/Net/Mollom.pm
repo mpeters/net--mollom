@@ -14,6 +14,7 @@ has public_key     => (is => 'rw', isa => 'Str', required => 1);
 has private_key    => (is => 'rw', isa => 'Str', required => 1);
 has session_id     => (is => 'rw', isa => 'Str');
 has xml_rpc        => (is => 'rw', isa => 'XML::RPC');
+has warnings       => (is => 'rw', isa => 'Bool', default => 1);
 
 our @SERVERS = (
     'http://xmlrpc1.mollom.com', 
@@ -39,7 +40,7 @@ XML-RPC to determine whether user input is Spam, Ham, flame or
 obscene.
 
     my $mollom = Net::Mollom->new(
-        public_key => 'a2476604ffba00c907478c8f40b83b03',
+        public_key  => 'a2476604ffba00c907478c8f40b83b03',
         private_key => '42d5448f124966e27db079c8fa92de0f',
     );
 
@@ -49,13 +50,14 @@ obscene.
         post_title => $title,
         post_body  => $text,
     );
-    if( $check->is_spam ) {
-        warn "someone's trying to sell us v1@grA!"
-    } elsif( $check->is_unsure ) {
+    if ($check->is_spam) {
+        warn "someone's trying to sell us v1@grA!";
+    } elsif ($check->is_unsure) {
+
         # show them a CAPTCHA to see if they are really human
         my $captcha_url = $mollom->get_image_captcha();
-    } elsif( $check->quality < .5 ) {
-        warn "someone's trying to flame us!"
+    } elsif ($check->quality < .5) {
+        warn "someone's trying to flame us!";
     }
 
 If you have any questions about how any of the methods work, please
@@ -424,7 +426,7 @@ sub _make_api_call {
                 return $self->_make_api_call($function, $args);
             }
         } elsif ($fault_code == $ERROR_NEXT_SERVER) {
-            carp("Mollom server busy, trying the next one.");
+            carp("Mollom server busy, trying the next one.") if $self->warnings;
             my $next_index = $self->current_server + 1;
             if ($#SERVERS <= $next_index) {
                 $self->current_server($next_index);

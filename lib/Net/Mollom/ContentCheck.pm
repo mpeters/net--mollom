@@ -1,5 +1,5 @@
 package Net::Mollom::ContentCheck;
-use Squirrel;
+use Any::Moose;
 
 has is_spam => (is => 'rw', isa => 'Bool');
 has is_ham  => (is => 'rw', isa => 'Bool');

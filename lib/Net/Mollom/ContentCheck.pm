@@ -7,6 +7,9 @@ has is_unsure  => (is => 'rw', isa => 'Bool');
 has quality => (is => 'rw', isa => 'Num');
 has session_id => (is => 'rw', isa => 'Str');
 
+no Any::Moose;
+__PACKAGE__->meta->make_immutable;
+
 =head1 NAME
 
 Net::Mollom::ContentCheck

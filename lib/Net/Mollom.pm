@@ -16,6 +16,9 @@ has session_id     => (is => 'rw', isa => 'Str');
 has xml_rpc        => (is => 'rw', isa => 'XML::RPC');
 has warnings       => (is => 'rw', isa => 'Bool', default => 1);
 
+no Any::Moose;
+__PACKAGE__->meta->make_immutable;
+
 our @SERVERS = (
     'http://xmlrpc1.mollom.com', 
     'http://xmlrpc2.mollom.com', 

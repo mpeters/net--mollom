@@ -9,25 +9,28 @@ use DateTime;
 use Carp qw(carp croak);
 use Net::Mollom::ContentCheck;
 
-has current_server => (is => 'rw', isa => 'Num', default  => 0);
-has public_key     => (is => 'rw', isa => 'Str', required => 1);
-has private_key    => (is => 'rw', isa => 'Str', required => 1);
+has current_server => (is => 'rw', isa => 'Num',  default  => 0);
+has public_key     => (is => 'rw', isa => 'Str',  required => 1);
+has private_key    => (is => 'rw', isa => 'Str',  required => 1);
 has session_id     => (is => 'rw', isa => 'Str');
 has xml_rpc        => (is => 'rw', isa => 'XML::RPC');
-has warnings       => (is => 'rw', isa => 'Bool', default => 1);
+has warnings       => (is => 'rw', isa => 'Bool', default  => 1);
+has attempt_limit  => (is => 'rw', isa => 'Num',  default  => 1);
+has attempts       => (is => 'rw', isa => 'Num',  default  => 0);
+has servers_init   => (is => 'rw', isa => 'Bool', default  => 0);
+has servers        => (
+    is      => 'rw',
+    isa     => 'ArrayRef',
+    default => sub {
+        ['http://xmlrpc1.mollom.com', 'http://xmlrpc2.mollom.com', 'http://xmlrpc3.mollom.com'];
+    },
+);
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
-our @SERVERS = (
-    'http://xmlrpc1.mollom.com', 
-    'http://xmlrpc2.mollom.com', 
-    'http://xmlrpc3.mollom.com',
-);
-our $SERVERS_INITIALIZED = 0;
 our $API_VERSION         = '1.0';
 our $VERSION             = '0.06';
-
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
 my $ERROR_NEXT_SERVER     = 1200;
@@ -83,6 +86,24 @@ This is your Mollom API public key.
 
 This is your Mollom API private key.
 
+=item * attempt_limit
+
+This is the number of times Net::Mollom will try to refresh the server list
+before giving up. Defaults to 1.
+
+=item * warnings
+
+This boolean turns on warnings. You will get warnings for the following
+situations:
+
+=over
+
+=item * A Mollom server is busy and we need to try a different one.
+
+=item * We have exhausted the list of servers to try and we need to get a new list.
+
+=back
+
 =back
 
 =head1 METHODS
@@ -104,7 +125,7 @@ in your application, but can be used when doing initial development or testing.
 sub verify_key {
     my $self = shift;
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     return $self->_make_api_call('verifyKey');
 }
 
@@ -165,7 +186,7 @@ sub check_content {
     croak "You must pass at least 1 argument to check_content!" unless %args;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     my $results = $self->_make_api_call('checkContent', \%args);
 
     # remember the session_id so we can pass it along in future calls
@@ -213,7 +234,7 @@ sub send_feedback {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     return $self->_make_api_call('sendFeedback', \%args);
 }
 
@@ -250,7 +271,7 @@ sub get_image_captcha {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     my $results = $self->_make_api_call('getImageCaptcha', \%args);
     $self->session_id($results->{session_id});
     return $results->{url};
@@ -289,7 +310,7 @@ sub get_audio_captcha {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     my $results = $self->_make_api_call('getAudioCaptcha', \%args);
     $self->session_id($results->{session_id});
     return $results->{url};
@@ -324,7 +345,7 @@ sub check_captcha {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     return $self->_make_api_call('checkCaptcha', \%args);
 }
 
@@ -345,16 +366,16 @@ since it will be called for you when you use another part of the API.
 sub server_list {
     my ($self, @list) = @_;
     if( @list ) {
-        @SERVERS = @list;
+        $self->servers(\@list);
         $self->current_server(0);
-    } elsif(!$SERVERS_INITIALIZED) {
+    } elsif(!$self->servers_init) {
         # get our list from their API
         my $results = $self->_make_api_call('getServerList');
-        @SERVERS = @$results;
-        $SERVERS_INITIALIZED = 1;
+        $self->servers($results);
+        $self->servers_init(1);
         $self->current_server(0);
     }
-    return @SERVERS;
+    return @{$self->servers};
 }
 
 =head2 get_statistics
@@ -389,16 +410,17 @@ sub get_statistics {
     );
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $SERVERS_INITIALIZED;
+    $self->server_list() unless $self->servers_init;
     return $self->_make_api_call('getStatistics', \%args);
 }
 
 sub _make_api_call {
     my ($self, $function, $args) = @_;
     my $secret = $self->private_key;
+    my @servers = @{$self->servers};
 
     if (!$self->xml_rpc) {
-        $self->xml_rpc(XML::RPC->new($SERVERS[$self->current_server] . '/' . $API_VERSION));
+        $self->xml_rpc(XML::RPC->new($servers[$self->current_server] . '/' . $API_VERSION));
     }
 
     $args->{public_key} ||= $self->public_key;
@@ -424,24 +446,36 @@ sub _make_api_call {
             if ($function eq 'getServerList') {
                 croak("Could not get list of servers from Mollom!");
             } else {
-                $SERVERS_INITIALIZED = 0;
+                $self->servers_init(0);
                 $self->server_list;
                 return $self->_make_api_call($function, $args);
             }
         } elsif ($fault_code == $ERROR_NEXT_SERVER) {
             carp("Mollom server busy, trying the next one.") if $self->warnings;
             my $next_index = $self->current_server + 1;
-            if ($#SERVERS <= $next_index) {
+            if ($servers[$next_index] ) {
                 $self->current_server($next_index);
                 return $self->_make_api_call($function, $args);
             } else {
-                croak("No more servers to try!");
+                # try to refresh the servers if we can
+                if ($self->attempt_limit > $self->attempts) {
+                    sleep(1);
+                    carp("No more servers to try. Attempting to refresh server list.")
+                      if $self->warnings;
+                    $self->attempts($self->attempts + 1);
+                    $self->servers_init(0);
+                    $self->server_list;
+                    return $self->_make_api_call($function, $args);
+                } else {
+                    croak("No more servers to try!");
+                }
             }
         } else {
             croak(
                 "Error communicating with Mollom [$results->{faultCode}]: $results->{faultString}");
         }
     } else {
+        $self->attempts(0);
         return $results;
     }
 }

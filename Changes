@@ -5,6 +5,7 @@ Revision history for Net-Mollom
     + Remove left over vestige of Squirrel in helper module.
     + added warnings attribute to silence helpful, but slightly annoying carp's
     + using Moose's make_immutable to give some speed up
+    + added attempt_limit attribute to control how many times we try to refresh our server list before giving up.
 
 0.05    2009-04-08
     + Remove old Makefile.PL that was confusing installers because it didn't list our new pre-reqs

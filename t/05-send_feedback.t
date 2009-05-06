@@ -37,10 +37,12 @@ SKIP: {
     ok($@);
     like($@, qr/did not pass regex check/);
 
+    sleep(1);
     my $results = $mollom->send_feedback(feedback => 'unwanted');
     ok($results);
 
     # specifying the session_id
+    sleep(1);
     $results = $mollom->send_feedback(feedback => 'unwanted', session_id => 123);
     ok($results);
 }

@@ -201,6 +201,18 @@ sub check_content {
     );
 }
 
+=head2 session_id
+
+This is the Mollom assigned session id. If you've made a call to
+C<check_content()> it will be set by Mollom and you must pass it later
+to any calls you make to C<send_feedback()>, C<get_image_captcha()>,
+C<get_audio_captcha()> or C<check_captcha()>. If you use the same Mollom
+object that made the C<check_content()> call then you don't need to do
+anything since it will remember that for you. But in most web applications
+the next request by a user will not be served by the next process or
+even the next server, so there's no guarantee. You need to store and
+remember this mollom session_id on your own.
+
 =head2 send_feedback
 
 Send feedback to Mollom about their rating of your content. Take sthe following
@@ -326,6 +338,10 @@ sent as part of this session. Takes the following named arguments:
 =item * solution
 
 The user's answer to the CAPTCHA
+
+=item * session_id
+
+The id of the Mollom session.
 
 =back
 

@@ -2,7 +2,7 @@ package Net::Mollom;
 use Any::Moose;
 use XML::RPC;
 use DateTime;
-use Params::Validate qw(validate SCALAR);
+use Params::Validate qw(validate SCALAR UNDEF);
 use Digest::HMAC_SHA1 qw(hmac_sha1);
 use MIME::Base64 qw(encode_base64);
 use DateTime;
@@ -171,20 +171,21 @@ sub check_content {
     my %args = validate(
         @_,
         {
-            post_title    => {type => SCALAR, optional => 1},
-            post_body     => {type => SCALAR, optional => 1},
-            author_name   => {type => SCALAR, optional => 1},
-            author_url    => {type => SCALAR, optional => 1},
-            author_mail   => {type => SCALAR, optional => 1},
-            author_openid => {type => SCALAR, optional => 1},
-            author_ip     => {type => SCALAR, optional => 1},
-            author_id     => {type => SCALAR, optional => 1},
-            session_id    => {type => SCALAR, optional => 1},
+            post_title    => {type => SCALAR | UNDEF, optional => 1},
+            post_body     => {type => SCALAR | UNDEF, optional => 1},
+            author_name   => {type => SCALAR | UNDEF, optional => 1},
+            author_url    => {type => SCALAR | UNDEF, optional => 1},
+            author_mail   => {type => SCALAR | UNDEF, optional => 1},
+            author_openid => {type => SCALAR | UNDEF, optional => 1},
+            author_ip     => {type => SCALAR | UNDEF, optional => 1},
+            author_id     => {type => SCALAR | UNDEF, optional => 1},
+            session_id    => {type => SCALAR | UNDEF, optional => 1},
         }
     );
 
     # we need at least 1 arg
-    croak "You must pass at least 1 argument to check_content!" unless %args;
+    croak "You must pass at least 1 argument to check_content!"
+      unless %args && map { defined $args{$_} } keys %args;
 
     # get the server list from Mollom if we don't already have one
     $self->server_list() unless $self->servers_init;

@@ -2,6 +2,7 @@ Revision history for Net-Mollom
 
 0.07
     + Documented use of session_id() to maintain state with Mollom when you use another process or object.
+    + allow session_id to be passed to check_content()
 
 0.06    2009-04-28
     + Drop Module::Build::Smolder since configure_requires seems to still trip up some testers

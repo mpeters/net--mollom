@@ -30,7 +30,7 @@ no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
 our $API_VERSION         = '1.0';
-our $VERSION             = '0.06';
+our $VERSION             = '0.07';
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
 my $ERROR_NEXT_SERVER     = 1200;
@@ -179,6 +179,7 @@ sub check_content {
             author_openid => {type => SCALAR, optional => 1},
             author_ip     => {type => SCALAR, optional => 1},
             author_id     => {type => SCALAR, optional => 1},
+            session_id    => {type => SCALAR, optional => 1},
         }
     );
 

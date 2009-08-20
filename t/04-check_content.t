@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More (tests => 17);
 use Net::Mollom;
+use Exception::Class::TryCatch qw(catch);
 
 # ham content
 my $mollom = Net::Mollom->new(
@@ -37,7 +38,7 @@ SKIP: {
             /,
         );
     };
-    skip("Can't reach Mollom servers", 10) if $@ =~ /no data/;
+    skip("Can't reach Mollom servers", 10) if catch(['Net::Mollom::CommunicationException']);
     isa_ok($check, 'Net::Mollom::ContentCheck');
     ok($check->is_ham, 'it is ham');
     ok(!$check->is_spam, 'it is not spam');

@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More (tests => 2);
 use Net::Mollom;
+use Exception::Class::TryCatch qw(catch);
 
 my $mollom = Net::Mollom->new(
     private_key => '42d54a81124966327d40c928fa92de0f',
@@ -13,6 +14,6 @@ isa_ok($mollom, 'Net::Mollom');
 SKIP: {
     my @servers;
     eval { @servers = $mollom->server_list };
-    skip("Can't reach Mollom servers", 1) if $@ && $@ =~ /no data/;
+    skip("Can't reach Mollom servers", 1) if catch(['Net::Mollom::CommunicationException']);
     cmp_ok($#servers, '>=', 1, 'got at least 1 server back');
 }

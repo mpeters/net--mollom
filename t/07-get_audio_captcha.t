@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More (tests => 8);
 use Net::Mollom;
+use Exception::Class::TryCatch qw(catch);
 
 # ham content
 my $mollom = Net::Mollom->new(
@@ -19,7 +20,7 @@ like($@, qr/was not listed/);
 SKIP: {
     my $url;
     eval { $url = $mollom->get_audio_captcha() };
-    skip("Can't reach Mollom servers", 5) if $@ && $@ =~ /no data/;
+    skip("Can't reach Mollom servers", 5) if catch(['Net::Mollom::CommunicationException']);
     ok($url);
     like($url, qr/^http:\/\/.*\.mp3/, "got MP3 URL $url");
 

@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More (tests => 6);
 use Net::Mollom;
+use Exception::Class::TryCatch qw(catch);
 
 # ham content
 my $mollom = Net::Mollom->new(
@@ -19,7 +20,7 @@ like($@, qr/missing/, 'needs a solution');
 SKIP: {
     my $url;
     eval { $url = $mollom->get_image_captcha };
-    skip("Can't reach Mollom servers", 3) if $@ && $@ =~ /no data/;
+    skip("Can't reach Mollom servers", 3) if catch(['Net::Mollom::CommunicationException']);
     ok($url);
 
     # now test it out

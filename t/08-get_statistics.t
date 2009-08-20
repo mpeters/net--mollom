@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More (tests => 7);
 use Net::Mollom;
+use Exception::Class::TryCatch qw(catch);
 
 # ham content
 my $mollom = Net::Mollom->new(
@@ -22,7 +23,7 @@ like($@, qr/did not pass regex check/);
 SKIP: {
     my $count;
     eval { $count = $mollom->get_statistics(type => 'total_days') };
-    skip("Can't reach Mollom servers", 2) if $@ && $@ =~ /no data/;
+    skip("Can't reach Mollom servers", 2) if catch(['Net::Mollom::CommunicationException']);
     ok($count);
     cmp_ok($count, '>=', 0);
 }

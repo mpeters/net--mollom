@@ -14,9 +14,11 @@ my $builder = Module::Build->new(
         'Digest::HMAC_SHA1' => 0,
         'MIME::Base64'      => 0,
         'DateTime'          => 0,
+        'Exception::Class'  => 0,
     },
     build_requires => {
         'Test::More'        => 0,
+        'Exception::Class::TryCatch' => 0,
     },
     add_to_cleanup => ['Net-Mollom-*'],
 );

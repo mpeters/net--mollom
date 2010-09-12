@@ -37,10 +37,11 @@ no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
 our $API_VERSION         = '1.0';
-our $VERSION             = '0.07';
+our $VERSION             = '0.08';
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
 my $ERROR_NEXT_SERVER     = 1200;
+my $MAX_API_TRIES         = 10;
 
 =head1 NAME
 
@@ -444,6 +445,13 @@ sub _make_api_call {
     my $secret = $self->private_key;
     my @servers = @{$self->servers};
 
+    # keep track of how many times we've descended down into this rabbit hole
+    if( !  $self->{_recurse_level} ) {
+        $self->{_recurse_level} = 1;
+    } else {
+        $self->{_recurse_level}++;
+    }
+
     if (!$self->xml_rpc) {
         my $xml_rpc = eval { XML::RPC->new($servers[$self->current_server] . '/' . $API_VERSION) };
         Net::Mollom::CommunicationException->throw(error => $@) if $@;
@@ -470,15 +478,16 @@ sub _make_api_call {
     # check if there are any errors and handle them accordingly
     if (ref $results && (ref $results eq 'HASH') && $results->{faultCode}) {
         my $fault_code = $results->{faultCode};
-        if ($fault_code == $ERROR_REFRESH_SERVERS) {
+        if (($fault_code == $ERROR_REFRESH_SERVERS) && ($self->{_recurse_level} < $MAX_API_TRIES) ) {
             if ($function eq 'getServerList') {
+                delete $self->{_recurse_level};
                 Net::Mollom::ServerListException->throw(error => "Could not get list of servers from Mollom!");
             } else {
                 $self->servers_init(0);
                 $self->server_list;
                 return $self->_make_api_call($function, $args);
             }
-        } elsif ($fault_code == $ERROR_NEXT_SERVER) {
+        } elsif (($fault_code == $ERROR_NEXT_SERVER) && ($self->{_recurse_level} < $MAX_API_TRIES)) {
             carp("Mollom server busy, trying the next one.") if $self->warnings;
             my $next_index = $self->current_server + 1;
             if ($servers[$next_index] ) {
@@ -498,15 +507,26 @@ sub _make_api_call {
                     Net::Mollom::ServerListException->throw(error => "No more Mollom servers to try!");
                 }
             }
-        } else {
+        } elsif( $self->{_recurse_level} < $MAX_API_TRIES ) {
+            delete $self->{_recurse_level};
             Net::Mollom::APIException->throw(
                 error => "Error communicating with Mollom [$results->{faultCode}]: $results->{faultString}",
+                mollom_code => $results->{faultCode},
+                mollom_desc => $results->{faultString},
+            );
+        } else {
+            my $msg = qq(Tried making API call "$function" $self->{_recurse_level} times but failed.)
+              . " Giving up";
+            delete $self->{_recurse_level};
+            Net::Mollom::APIException->throw(
+                error       => $msg,
                 mollom_code => $results->{faultCode},
                 mollom_desc => $results->{faultString},
             );
         }
     } else {
         $self->attempts(0);
+        delete $self->{_recurse_level} unless $function eq 'getServerList';
         return $results;
     }
 }

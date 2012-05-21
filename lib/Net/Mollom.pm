@@ -37,7 +37,7 @@ no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
 our $API_VERSION         = '1.0';
-our $VERSION             = '0.08';
+our $VERSION             = '0.09';
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
 my $ERROR_NEXT_SERVER     = 1200;

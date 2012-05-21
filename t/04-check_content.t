@@ -12,6 +12,8 @@ my $mollom = Net::Mollom->new(
 );
 isa_ok($mollom, 'Net::Mollom');
 
+$mollom->servers(['dev.mollom.com']);
+
 # check parameter validation
 my $check;
 eval { $check = $mollom->check_content(foo => 1) };

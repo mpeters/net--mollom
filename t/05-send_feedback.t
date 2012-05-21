@@ -11,6 +11,8 @@ my $mollom = Net::Mollom->new(
     public_key => '72446602ffba00c907478c8f45b83b03',
 );
 isa_ok($mollom, 'Net::Mollom');
+$mollom->servers(['dev.mollom.com']);
+
 my $check;
 SKIP: {
     eval { 

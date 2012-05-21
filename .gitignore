@@ -8,3 +8,4 @@ Build
 blib
 MYMETA.yml
 MYMETA.json
+*.tar.gz

@@ -250,7 +250,7 @@ sub send_feedback {
         @_,
         {
             feedback   => { type => SCALAR, regex => qr/^(spam|profanity|low-quality|unwanted)$/ },
-            session_id => { type => SCALAR, optional => 1 },
+            session_id => { type => SCALAR | UNDEF, optional => 1 },
         }
     );
     $args{session_id} ||= $self->session_id;
@@ -286,8 +286,8 @@ sub get_image_captcha {
     my %args = validate(
         @_,
         {
-            author_ip  => { type => SCALAR, optional => 1 },
-            session_id => { type => SCALAR, optional => 1 },
+            author_ip  => { type => SCALAR | UNDEF, optional => 1 },
+            session_id => { type => SCALAR | UNDEF, optional => 1 },
         }
     );
     $args{session_id} ||= $self->session_id;
@@ -325,8 +325,8 @@ sub get_audio_captcha {
     my %args = validate(
         @_,
         {
-            author_ip  => { type => SCALAR, optional => 1 },
-            session_id => { type => SCALAR, optional => 1 },
+            author_ip  => { type => SCALAR | UNDEF, optional => 1 },
+            session_id => { type => SCALAR | UNDEF, optional => 1 },
         }
     );
     $args{session_id} ||= $self->session_id;
@@ -365,7 +365,7 @@ sub check_captcha {
         @_,
         {
             solution   => { type => SCALAR },
-            session_id => { type => SCALAR, optional => 1 },
+            session_id => { type => SCALAR | UNDEF, optional => 1 },
         }
     );
     $args{session_id} ||= $self->session_id;

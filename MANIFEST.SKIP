@@ -6,3 +6,4 @@ _build
 \.git
 blib
 ^MYMETA.yml$
+^MYMETA\.json$

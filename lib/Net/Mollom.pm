@@ -56,6 +56,7 @@ obscene.
     my $mollom = Net::Mollom->new(
         public_key  => 'a2476604ffba00c907478c8f40b83b03',
         private_key => '42d5448f124966e27db079c8fa92de0f',
+        session_id  => '13053050080d1c1234', # if this is tied to a previous request
     );
 
     my @server_list = $mollom->server_list();
@@ -93,6 +94,15 @@ This is your Mollom API public key.
 =item * private_key (required)
 
 This is your Mollom API private key.
+
+=item * session_id
+
+This is a Mollom session ID needed to track spam checks and CAPTCHA
+answers across multiple web requests. If none is provided Mollom assumes a
+new session and will create a new ID. If the same object is not handling
+multiple web request (which is the norm) you will need to store this
+value somewhere yourself and pass it to Mollom when you create a new
+object (or separately to each individual method, see below).
 
 =item * attempt_limit
 
@@ -160,6 +170,10 @@ optional named arguments:
 
 =item * author_id
 
+=item * session_id
+
+If different than the one passed to C<new()> (or if you didn't pass one to C<new()>).
+
 =back
 
 Returns a L<Net::Mollom::ContentCheck> object.
@@ -213,15 +227,16 @@ sub check_content {
 
 =head2 session_id
 
-This is the Mollom assigned session id. If you've made a call to
-C<check_content()> it will be set by Mollom and you must pass it later
-to any calls you make to C<send_feedback()>, C<get_image_captcha()>,
-C<get_audio_captcha()> or C<check_captcha()>. If you use the same Mollom
-object that made the C<check_content()> call then you don't need to do
-anything since it will remember that for you. But in most web applications
-the next request by a user will not be served by the next process or
-even the next server, so there's no guarantee. You need to store and
-remember this mollom session_id on your own.
+This is the Mollom assigned session id. If you passed a session_id
+to C<new()> or if you've made a call to C<check_content()> it will
+be set by Mollom and you must pass it later to any calls you make to
+C<send_feedback()>, C<get_image_captcha()>, C<get_audio_captcha()>
+or C<check_captcha()>. If you use the same Mollom object that made the
+C<check_content()> call then you don't need to do anything since it will
+remember that for you. But in most web applications the next request by
+a user will not be served by the next process or even the next server,
+so there's no guarantee. You need to store and remember this mollom
+session_id on your own.
 
 =head2 send_feedback
 
@@ -234,13 +249,11 @@ optional named parameters:
 
 A string value of either C<spam>, C<profanity>, C<low-quality>, or C<unwanted>.
 
-=item * session_id
-
-The id of the session where the content was checed (by a call to C<check_content>).
+=item * session_id (optional)
 
 =back
 
-    $mollom->send_feedback
+    $mollom->send_feedback(feedback => 'spam');
 
 =cut 
 
@@ -273,9 +286,6 @@ It takes the following optional parameters:
 The IP address of the content author
 
 =item * session_id
-
-The Mollom session_id. Normally you don't need to worry about this since Net::Mollom
-will take care of it for you.
 
 =back
 
@@ -313,9 +323,6 @@ The IP address of the content author
 
 =item * session_id
 
-The Mollom session_id. Normally you don't need to worry about this since Net::Mollom
-will take care of it for you.
-
 =back
 
 =cut
@@ -350,8 +357,6 @@ sent as part of this session. Takes the following named arguments:
 The user's answer to the CAPTCHA
 
 =item * session_id
-
-The id of the Mollom session.
 
 =back
 

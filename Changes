@@ -1,5 +1,8 @@
 Revision history for Net-Mollom
 
+0.10    2013-07-18
+    + Replace Any::Moose dependency with Moo and Type::Tiny (Mark Stosberg)
+
 0.09    2012-05-21
     + Allow more <undef>s for optional values
     + Use new Mollom test domain during tests

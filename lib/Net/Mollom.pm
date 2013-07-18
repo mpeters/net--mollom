@@ -24,14 +24,6 @@ has xml_rpc        => (is => 'rw', isa => 'XML::RPC');
 has warnings       => (is => 'rw', isa => 'Bool', default  => 1);
 has attempt_limit  => (is => 'rw', isa => 'Num',  default  => 1);
 has attempts       => (is => 'rw', isa => 'Num',  default  => 0);
-has servers_init   => (is => 'rw', isa => 'Bool', default  => 0);
-has servers        => (
-    is      => 'rw',
-    isa     => 'ArrayRef',
-    default => sub {
-        ['http://xmlrpc1.mollom.com', 'http://xmlrpc2.mollom.com', 'http://xmlrpc3.mollom.com'];
-    },
-);
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
@@ -42,6 +34,12 @@ my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
 my $ERROR_NEXT_SERVER     = 1200;
 my $MAX_API_TRIES         = 10;
+
+# Following the Mollom docs recommendation, a package-scoped variable is used to store the server
+# list persistently.  In a persistent web server, it would persist until the child-process exits
+# or the web server is restarted.
+our @SERVERS = ('http://xmlrpc1.mollom.com', 'http://xmlrpc2.mollom.com', 'http://xmlrpc3.mollom.com');
+our $SERVERS_INIT = 0;
 
 =head1 NAME
 
@@ -143,7 +141,7 @@ in your application, but can be used when doing initial development or testing.
 sub verify_key {
     my $self = shift;
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     return $self->_make_api_call('verifyKey');
 }
 
@@ -210,7 +208,7 @@ sub check_content {
       unless %args && map { defined $args{$_} } keys %args;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     my $results = $self->_make_api_call('checkContent', \%args);
 
     # remember the session_id so we can pass it along in future calls
@@ -269,7 +267,7 @@ sub send_feedback {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     return $self->_make_api_call('sendFeedback', \%args);
 }
 
@@ -303,7 +301,7 @@ sub get_image_captcha {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     my $results = $self->_make_api_call('getImageCaptcha', \%args);
     $self->session_id($results->{session_id});
     return $results->{url};
@@ -339,7 +337,7 @@ sub get_audio_captcha {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     my $results = $self->_make_api_call('getAudioCaptcha', \%args);
     $self->session_id($results->{session_id});
     return $results->{url};
@@ -376,7 +374,7 @@ sub check_captcha {
     $args{session_id} ||= $self->session_id;
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     return $self->_make_api_call('checkCaptcha', \%args);
 }
 
@@ -397,16 +395,16 @@ since it will be called for you when you use another part of the API.
 sub server_list {
     my ($self, @list) = @_;
     if( @list ) {
-        $self->servers(\@list);
+        @SERVERS = @list;
         $self->current_server(0);
-    } elsif(!$self->servers_init) {
+    } elsif(!$SERVERS_INIT) {
         # get our list from their API
         my $results = $self->_make_api_call('getServerList');
-        $self->servers($results);
-        $self->servers_init(1);
+        @SERVERS = @$results;
+        $SERVERS_INIT = 1;
         $self->current_server(0);
     }
-    return @{$self->servers};
+    return @SERVERS;
 }
 
 =head2 get_statistics
@@ -441,14 +439,13 @@ sub get_statistics {
     );
 
     # get the server list from Mollom if we don't already have one
-    $self->server_list() unless $self->servers_init;
+    $self->server_list() unless $SERVERS_INIT;
     return $self->_make_api_call('getStatistics', \%args);
 }
 
 sub _make_api_call {
     my ($self, $function, $args) = @_;
     my $secret = $self->private_key;
-    my @servers = @{$self->servers};
 
     # keep track of how many times we've descended down into this rabbit hole
     if( !  $self->{_recurse_level} ) {
@@ -458,7 +455,7 @@ sub _make_api_call {
     }
 
     if (!$self->xml_rpc) {
-        my $xml_rpc = eval { XML::RPC->new($servers[$self->current_server] . '/' . $API_VERSION) };
+        my $xml_rpc = eval { XML::RPC->new($SERVERS[$self->current_server] . '/' . $API_VERSION) };
         Net::Mollom::CommunicationException->throw(error => $@) if $@;
         $self->xml_rpc($xml_rpc);
     }
@@ -488,14 +485,14 @@ sub _make_api_call {
                 delete $self->{_recurse_level};
                 Net::Mollom::ServerListException->throw(error => "Could not get list of servers from Mollom!");
             } else {
-                $self->servers_init(0);
+                $SERVERS_INIT = 0;
                 $self->server_list;
                 return $self->_make_api_call($function, $args);
             }
         } elsif (($fault_code == $ERROR_NEXT_SERVER) && ($self->{_recurse_level} < $MAX_API_TRIES)) {
             carp("Mollom server busy, trying the next one.") if $self->warnings;
             my $next_index = $self->current_server + 1;
-            if ($servers[$next_index] ) {
+            if ($SERVERS[$next_index] ) {
                 $self->current_server($next_index);
                 return $self->_make_api_call($function, $args);
             } else {
@@ -505,7 +502,7 @@ sub _make_api_call {
                     carp("No more servers to try. Attempting to refresh server list.")
                       if $self->warnings;
                     $self->attempts($self->attempts + 1);
-                    $self->servers_init(0);
+                    $SERVERS_INIT = 0;
                     $self->server_list;
                     return $self->_make_api_call($function, $args);
                 } else {

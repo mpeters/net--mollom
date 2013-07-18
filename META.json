@@ -4,7 +4,7 @@
       "Michael Peters <mpeters@plusthree.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4, CPAN::Meta::Converter version 2.120630",
+   "generated_by" : "Module::Build version 0.4006, CPAN::Meta::Converter version 2.131560",
    "license" : [
       "perl_5"
    ],
@@ -22,17 +22,18 @@
       },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.4"
+            "Module::Build" : "0.40"
          }
       },
       "runtime" : {
          "requires" : {
-            "Any::Moose" : "0",
             "DateTime" : "0",
             "Digest::HMAC_SHA1" : "0",
             "Exception::Class" : "0",
             "MIME::Base64" : "0",
+            "Moo" : "0",
             "Params::Validate" : "0",
+            "Types::Standard" : "0",
             "XML::RPC" : "0.9"
          }
       }
@@ -43,8 +44,7 @@
          "version" : "0.09"
       },
       "Net::Mollom::ContentCheck" : {
-         "file" : "lib/Net/Mollom/ContentCheck.pm",
-         "version" : 0
+         "file" : "lib/Net/Mollom/ContentCheck.pm"
       }
    },
    "release_status" : "stable",

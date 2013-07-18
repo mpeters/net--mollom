@@ -1,14 +1,14 @@
 package Net::Mollom::ContentCheck;
-use Any::Moose;
+use Moo;
+use Types::Standard qw(Bool Num Str);
 
-has is_spam => (is => 'rw', isa => 'Bool');
-has is_ham  => (is => 'rw', isa => 'Bool');
-has is_unsure  => (is => 'rw', isa => 'Bool');
-has quality => (is => 'rw', isa => 'Num');
-has session_id => (is => 'rw', isa => 'Str');
+has is_spam    => (is => 'rw', isa => Bool);
+has is_ham     => (is => 'rw', isa => Bool);
+has is_unsure  => (is => 'rw', isa => Bool);
+has quality    => (is => 'rw', isa => Num);
+has session_id => (is => 'rw', isa => Str);
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 =head1 NAME
 

@@ -1,5 +1,6 @@
 package Net::Mollom;
-use Any::Moose;
+use Moo;
+use Types::Standard qw(Num Str Bool InstanceOf ArrayRef);
 use XML::RPC;
 use DateTime;
 use Params::Validate qw(validate SCALAR UNDEF);
@@ -16,28 +17,27 @@ use Exception::Class (
       {isa => 'Net::Mollom::Exception', fields => [qw(mollom_code mollom_desc)]},
 );
 
-has current_server => (is => 'rw', isa => 'Num',  default  => 0);
-has public_key     => (is => 'rw', isa => 'Str',  required => 1);
-has private_key    => (is => 'rw', isa => 'Str',  required => 1);
-has session_id     => (is => 'rw', isa => 'Str');
-has xml_rpc        => (is => 'rw', isa => 'XML::RPC');
-has warnings       => (is => 'rw', isa => 'Bool', default  => 1);
-has attempt_limit  => (is => 'rw', isa => 'Num',  default  => 1);
-has attempts       => (is => 'rw', isa => 'Num',  default  => 0);
-has servers_init   => (is => 'rw', isa => 'Bool', default  => 0);
+has current_server => (is => 'rw', isa => Num,  default  => 0);
+has public_key     => (is => 'rw', isa => Str,  required => 1);
+has private_key    => (is => 'rw', isa => Str,  required => 1);
+has session_id     => (is => 'rw', isa => Str);
+has xml_rpc        => (is => 'rw', isa => InstanceOf['XML::RPC']);
+has warnings       => (is => 'rw', isa => Bool, default  => 1);
+has attempt_limit  => (is => 'rw', isa => Num,  default  => 1);
+has attempts       => (is => 'rw', isa => Num,  default  => 0);
+has servers_init   => (is => 'rw', isa => Bool, default  => 0);
 has servers        => (
     is      => 'rw',
-    isa     => 'ArrayRef',
+    isa     => ArrayRef,
     default => sub {
         ['http://xmlrpc1.mollom.com', 'http://xmlrpc2.mollom.com', 'http://xmlrpc3.mollom.com'];
     },
 );
 
-no Any::Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 our $API_VERSION         = '1.0';
-our $VERSION             = '0.09';
+our $VERSION             = '0.10';
 my $ERROR_PARSE           = 1000;
 my $ERROR_REFRESH_SERVERS = 1100;
 my $ERROR_NEXT_SERVER     = 1200;

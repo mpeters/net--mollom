@@ -1,6 +1,6 @@
 package Net::Mollom;
 use Moo;
-use Types::Standard qw(Num Str Bool InstanceOf ArrayRef);
+use Types::Standard qw(Num Str Bool InstanceOf ArrayRef HashRef);
 use XML::RPC;
 use DateTime;
 use Params::Validate qw(validate SCALAR UNDEF);
@@ -25,6 +25,7 @@ has xml_rpc        => (is => 'lazy', isa => InstanceOf['XML::RPC'] );
 has warnings       => (is => 'rw', isa => Bool, default  => 1);
 has attempt_limit  => (is => 'rw', isa => Num,  default  => 1);
 has attempts       => (is => 'rw', isa => Num,  default  => 0);
+has xml_treepp_options => (is => 'rw', isa =>  HashRef, default => sub {{}});
 
 no Moo;
 
@@ -80,7 +81,7 @@ consult the Mollom API documentation - L<http://mollom.com/api>.
 
 =head2 new
 
-This creates a new NET::Mollom object for communication. It takes the following
+This creates a new NeT::Mollom object for communication. It takes the following
 named arguments:
 
 =over
@@ -106,6 +107,14 @@ object (or separately to each individual method, see below).
 
 This is the number of times Net::Mollom will try to refresh the server list
 before giving up. Defaults to 1.
+
+=item * xml_treepp_options
+
+We use L<XML::RPC> which in turn uses L<XML::TreePP>. Here you can pass a
+hashref arguments will in turn be passed to the L<XML::TreePP> constructor.
+This is useful for example if you want to to provide a customized user agent
+for the HTTP request.
+
 
 =item * warnings
 
@@ -445,7 +454,9 @@ sub get_statistics {
 
 sub _build_xml_rpc {
     my $self = shift;
-    my $xml_rpc = eval { XML::RPC->new($SERVERS[$self->current_server] . '/' . $API_VERSION) };
+    my $xml_rpc = eval { 
+        XML::RPC->new($SERVERS[$self->current_server] . '/' . $API_VERSION, %{ $self->xml_treepp_options })  
+    };
     Net::Mollom::CommunicationException->throw(error => $@) if $@;
     return $xml_rpc;
 }

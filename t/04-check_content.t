@@ -12,7 +12,7 @@ my $mollom = Net::Mollom->new(
 );
 isa_ok($mollom, 'Net::Mollom');
 
-$mollom->servers(['dev.mollom.com']);
+$mollom->server_list('dev.mollom.com');
 
 # check parameter validation
 my $check;

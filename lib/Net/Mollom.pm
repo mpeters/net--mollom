@@ -21,7 +21,7 @@ has current_server => (is => 'rw', isa => Num,  default  => 0);
 has public_key     => (is => 'rw', isa => Str,  required => 1);
 has private_key    => (is => 'rw', isa => Str,  required => 1);
 has session_id     => (is => 'rw', isa => Str);
-has xml_rpc        => (is => 'rw', isa => InstanceOf['XML::RPC']);
+has xml_rpc        => (is => 'lazy', isa => InstanceOf['XML::RPC'] );
 has warnings       => (is => 'rw', isa => Bool, default  => 1);
 has attempt_limit  => (is => 'rw', isa => Num,  default  => 1);
 has attempts       => (is => 'rw', isa => Num,  default  => 0);
@@ -443,6 +443,13 @@ sub get_statistics {
     return $self->_make_api_call('getStatistics', \%args);
 }
 
+sub _build_xml_rpc {
+    my $self = shift;
+    my $xml_rpc = eval { XML::RPC->new($SERVERS[$self->current_server] . '/' . $API_VERSION) };
+    Net::Mollom::CommunicationException->throw(error => $@) if $@;
+    return $xml_rpc;
+}
+
 sub _make_api_call {
     my ($self, $function, $args) = @_;
     my $secret = $self->private_key;
@@ -452,12 +459,6 @@ sub _make_api_call {
         $self->{_recurse_level} = 1;
     } else {
         $self->{_recurse_level}++;
-    }
-
-    if (!$self->xml_rpc) {
-        my $xml_rpc = eval { XML::RPC->new($SERVERS[$self->current_server] . '/' . $API_VERSION) };
-        Net::Mollom::CommunicationException->throw(error => $@) if $@;
-        $self->xml_rpc($xml_rpc);
     }
 
     $args->{public_key} ||= $self->public_key;
